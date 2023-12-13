@@ -6,7 +6,11 @@ Thumbs.db
 
 # Data
 raw_data/
-
+clean_data/
+notebooks/carac.csv
+notebooks/lieux.csv
+notebooks/usagers.csv
+notebooks/vehi.csv
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
