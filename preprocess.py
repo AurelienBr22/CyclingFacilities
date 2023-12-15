@@ -3,6 +3,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import make_column_transformer
 import datetime as dt
+import pandas as pd
+import numpy as np
 
 
 def preprocess_features(X: pd.DataFrame) -> np.ndarray:
