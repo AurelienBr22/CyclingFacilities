@@ -84,78 +84,21 @@ def concat_files(starting_word):
 
     return df_concat
 
-
 #### CLEANING VEHICULES ####
-catv_group_named = {
-    "Bicycles_ElectricScooters": [1, 80, 50, 60],  # Bicycles, E-bikes, and Personal Mobility Devices
-    "Cars": [3, 7, 8, 9],  # Cars including light vehicles, VL + caravane, VL + remorque
-    "Motorcycles_Scooters": [2, 30, 31, 32, 33, 34, 41, 42, 43, 4, 5, 6],  # Motorcycles, scooters, scooter immatriculé, motocyclette, side-car
-    "HeavyVehicles_Buses": [10, 13, 14, 15, 16, 17, 37, 38, 18, 19],  # Utility vehicles, heavy trucks, buses, transport en commun, tramway
-    "Others_SpecialVehicles": [0, 20, 21, 39, 40, 99, 11, 12, 35, 36]  # Special vehicles and others, VU + caravane, VU + remorque
-}
+def process_catv(df):
+    df.loc[df.catv == -1, 'catv'] = df.catv.mode()[0]
+    df = df[df['catv']==1]
+    return df
 
+def create_aug(df):
+    df['aug'] = df['Num_Acc'].astype(str) + df['num_veh'].astype(str)
+    return df
 
-obs_group_named = {
-    "NoObstacle": [-1, 0],  # Without obstacle
-    "WithObstacle": list(range(1, 18))  # With obstacle
-}
-
-obsm_group_named = {
-    "Pedestrian_Vehicle_Rail": [1, 2, 4],  # Pedestrian, Vehicle, Rail Vehicle
-    "Animals": [5, 6],  # Animals
-    "Others_NotClassified": [-1, 0, 9]  # Other or Not Classified
-}
-
-choc_group_named = {
-    "NoImpact": [0],  # No impact
-    "Impact": list(range(1, 10))  # Impact
-}
-
-manv_group_named = {
-    "BasicManeuvers": [1, 2, 3],  # Standard driving maneuvers
-    "DirectionalChanges": [11, 12, 13, 14, 15, 16, 17, 18],  # Maneuvers involving directional changes
-    "DefensiveManeuvers": [21, 22],  # Defensive driving maneuvers
-    "TrajectoryChanges": [10],  # Significant trajectory changes
-    "RiskyManeuvers": [4, 5, 6, 7, 8, 9, 19, 26],  # Unusual or risky maneuvers
-    "StationaryParkingManeuvers": [20, 23, 24, 25]  # Stationary or parking related maneuvers
-}
-
-def clean_and_transform_data(df, catv_group_inverted, choc_group_inverted, obs_group_inverted, obsm_group_inverted, manv_group_inverted):
-    # Drop unnecessary columns
-    df_modif = df.drop(["id_vehicule", "motor", "occutc", "senc"], axis=1)
-
-    # CATV: Assign mode to -1 values
-    df_modif.loc[df_modif.catv == -1, 'catv'] = df_modif.catv.mode()[0]
-
-    # Define a function for cleaning and imputing values based on distribution
-    def clean_and_impute(column):
-        # Calculate distribution of values greater than or equal to 0
-        values_distribution = df_modif[column][df_modif[column] >= 0].value_counts(normalize=True)
-
-        # Impute NaNs and -1 values
-        for condition in [df_modif[column].isna(), df_modif[column] == -1]:
-            new_values = np.random.choice(values_distribution.index, size=condition.sum(), p=values_distribution.values)
-            df_modif.loc[condition, column] = new_values
-
-    # Apply the cleaning and imputing function to specified columns
-    for col in ['obs', 'obsm', 'choc', 'manv']:
-        clean_and_impute(col)
-
-    # Mapping to group values
-    df_modif['catv'] = df_modif['catv'].map(catv_group_inverted)
-    df_modif['choc'] = df_modif['choc'].map(choc_group_inverted)
-    df_modif['obs'] = df_modif['obs'].map(obs_group_inverted)
-    df_modif['obsm'] = df_modif['obsm'].map(obsm_group_inverted)
-    df_modif['manv'] = df_modif['manv'].map(manv_group_inverted)
-
-    return df_modif
+def remove_duplicated_acc(df):
+    return df[~df['Num_Acc'].duplicated(keep=False)]
 
 
 #### CLEANING CARACTERISTIQUES ####
-def drop_columns(df, columns):
-    return df.drop(columns, axis=1, inplace=False)
-
-
 def process_dates(df, year_col='an', month_col='mois', day_col='jour', time_col='hrmn'):
     # Checking for invalid dates
     invalid_dates = df[(df[day_col] > 31) | ((df[month_col] == 2) & (df[day_col] > 29)) | ((df[month_col].isin([4, 6, 9, 11])) & (df[day_col] > 30))]
@@ -169,20 +112,40 @@ def process_dates(df, year_col='an', month_col='mois', day_col='jour', time_col=
                                 format='%y%m%d%H%M', errors='coerce')
 
     df = df.drop(columns=[year_col, month_col, day_col, time_col])
+
     return df
 
 def drop_nans(df, columns):
     return df.dropna(subset=columns)
 
-def clean_column_distribution(df, column, invalid_value=-1):
-    valid_values = df[column][df[column] >= 0].value_counts(normalize=True)
-    new_values = np.random.choice(valid_values.index, size=(df[column] == invalid_value).sum(), p=valid_values.values)
-    df.loc[df[column] == invalid_value, column] = new_values
+def impute_invalid_values(df, columns, invalid_values):
+    for column in columns:
+        for invalid_value in invalid_values:
+            # Separate handling for NaN/NaT values
+            if pd.isna(invalid_value) or (isinstance(invalid_value, pd._libs.tslibs.nattype.NaTType) and pd.api.types.is_datetime64_any_dtype(df[column])):
+                # calculate distribution excluding NaN and other invalid values
+                distribution = df[column][~df[column].isin(invalid_values)].value_counts(normalize=True)
+
+                # assign new values
+                new_values = np.random.choice(distribution.index, size=df[column].isna().sum(), p=distribution.values)
+                df.loc[df[column].isna(), column] = new_values
+            else:
+                # calculate distribution for a given value, excluding other invalid values
+                distribution = df[column][~df[column].isin(invalid_values)].value_counts(normalize=True)
+
+                # assign new values
+                new_values = np.random.choice(distribution.index, size=(df[column] == invalid_value).sum(), p=distribution.values)
+                df.loc[df[column] == invalid_value, column] = new_values
     return df
 
-def replace_with_most_frequent(df, column, invalid_value=-1):
-    most_frequent = df[column].mode()[0]
-    df[column] = df[column].replace(invalid_value, most_frequent)
+def replace_with_most_frequent(df, columns, invalid_value=-1):
+    for column in columns:
+        most_frequent = df[column].mode()[0]
+        df[column] = df[column].replace(invalid_value, most_frequent)
+    return df
+
+def remove_no_location(df):
+    df = df[~((df.adr.isna()) & ((df.lat.isna()) & (df.long.isna())) )]
     return df
 
 def filter_df_on_column(df, column, valid_values):
@@ -240,50 +203,73 @@ def process_trajet(df):
     df['trajet'] = trajet_impute.astype(int).replace({-1: 1})
     return df
 
+def create_dup_count(df):
+    df['dup_count'] = df.groupby('aug')['aug'].transform('count')
+    df = df.drop_duplicates(subset=['aug'], keep='first')
+    return df
 
-# dl, save datasets
-download_and_process_datasets()
+def concat_datasets():
+    # concat datasets
+    carac_df = concat_files("caracteristiques")
+    lieux_df = concat_files("lieux")
+    usager_df = concat_files("usagers")
+    vehi_df = concat_files("vehicules")
+    return vehi_df, carac_df, lieux_df, usager_df
 
-# concat datasets
-carac_df = concat_files("caracteristiques")
-lieux_df = concat_files("lieux")
-usager_df = concat_files("usagers")
-vehi_df = concat_files("vehicules")
+def clean_datasets(vehi_df, carac_df, lieux_df, usager_df):
+    # clean vehicules
+    vehi_df_clean = (vehi_df
+                    .pipe(drop_irrelevant_columns, ["id_vehicule", "motor", "occutc", "senc"])
+                    .pipe(process_catv)
+                    .pipe(create_aug)
+                    .pipe(impute_invalid_values, ['obs', 'obsm', 'choc', 'manv'], [-1, np.NaN])
+                    .pipe(remove_duplicated_acc))
 
-# clean vehicules
-vehi_df_clean = clean_and_transform_data(vehi_df, catv_group_inverted, choc_group_inverted, obs_group_inverted, obsm_group_inverted, manv_group_inverted)
+    # clean caracteristiques
+    carac_df_clean = (carac_df
+                    .pipe(drop_irrelevant_columns, ['gps', 'Accident_Id'])
+                    .pipe(process_dates)
+                    .pipe(impute_invalid_values, ['date', 'atm'], [np.NaN])
+                    .pipe(drop_nans, ['Num_Acc', 'col', 'com'])
+                    .pipe(impute_invalid_values, ['lum', 'int', 'col'], [-1])
+                    .pipe(replace_with_most_frequent, ['lum', 'agg', 'atm'])
+                    .pipe(remove_no_location))
 
-# clean caracteristiques
-carac_df_clean = (carac_df
-                  .pipe(drop_columns, ['gps', 'Accident_Id'])
-                  .pipe(process_dates)
-                  .pipe(drop_nans, ['Num_Acc'])
-                  .pipe(clean_column_distribution, 'lum')
-                  .pipe(filter_df_on_column, 'int', valid_values=[value for value in carac_df['int'].unique() if value != -1])
-                  .pipe(drop_nans, ['col', 'atm', 'com'])
-                  .pipe(replace_with_most_frequent, 'col')
-                  .pipe(replace_with_most_frequent, 'atm'))
+    # clean lieux
+    lieux_df_clean = (lieux_df
+                    .pipe(clean_column, 'situ', {-1: 1, 0: 1}, 1)
+                    .pipe(clean_column, 'circ', {0: 2, -1: 2}, 2)
+                    .pipe(clean_nbv)
+                    .pipe(clean_column, 'vosp', {-1: 0}, 0)
+                    .pipe(clean_column, 'prof', {-1: 1, 0: 1}, 1)
+                    .pipe(clean_column, 'plan', {-1: 1, 0: 1}, 1)
+                    .pipe(clean_column, 'surf', {-1: 1, 0: 1, 9: 1}, 1)
+                    .pipe(clean_column, 'infra', {-1: 1}, 1)
+                    .pipe(clean_catr)
+                    .pipe(drop_irrelevant_columns, ['voie', 'v1', 'v2', 'pr', 'pr1', 'lartpc', 'larrout', 'vma', 'env1']))
 
-# clean lieux
-lieux_df_clean = (lieux_df
-                  .pipe(clean_column, 'situ', {-1: 1, 0: 1}, 1)
-                  .pipe(clean_column, 'circ', {0: 2, -1: 2}, 2)
-                  .pipe(clean_nbv)
-                  .pipe(clean_column, 'vosp', {-1: 0}, 0)
-                  .pipe(clean_column, 'prof', {-1: 1, 0: 1}, 1)
-                  .pipe(clean_column, 'plan', {-1: 1, 0: 1}, 1)
-                  .pipe(clean_column, 'surf', {-1: 1, 0: 1, 9: 1}, 1)
-                  .pipe(clean_column, 'infra', {-1: 1}, 1)
-                  .pipe(clean_catr)
-                  .pipe(drop_irrelevant_columns, ['voie', 'v1', 'v2', 'pr', 'pr1', 'lartpc', 'larrout', 'vma', 'env1']))
+    # clean usagers
+    usager_df_clean = (usager_df
+                    .pipe(process_grav_sexe, column='grav')
+                    .pipe(process_grav_sexe, column='sexe')
+                    .pipe(process_trajet)
+                    .pipe(process_secu)
+                    .pipe(process_actp)
+                    .pipe(process_locp_etatp, columns=['locp', 'etatp'])
+                    .pipe(process_an_nais)
+                    .pipe(create_aug)
+                    .pipe(create_dup_count)
+                    .pipe(drop_irrelevant_columns, columns=['place', 'catu', 'secu1', 'secu2', 'secu3', 'num_veh', 'id_vehicule', 'id_usager']))
 
-# clean usagers
-usager_df_clean = (usager_df
-                .pipe(process_grav_sexe, column='grav')
-                .pipe(process_grav_sexe, column='sexe')
-                .pipe(process_trajet)
-                .pipe(process_secu)
-                .pipe(process_actp)
-                .pipe(process_locp_etatp, columns=['locp', 'etatp'])
-                .pipe(process_an_nais)
-                .pipe(drop_irrelevant_columns, columns=['place', 'catu', 'secu1', 'secu2', 'secu3', 'num_veh', 'id_vehicule', 'id_usager']))
+    return vehi_df_clean, carac_df_clean, lieux_df_clean, usager_df_clean
+
+def merge_cleaned_datasets(vehi_df_clean, carac_df_clean, lieux_df_clean, usager_df_clean):
+    vehi_usa = pd.merge(vehi_df_clean, usager_df_clean, on='aug', how='inner')
+    vehi_usa = vehi_usa.drop(columns=['num_veh', 'Num_Acc_y'])
+    vehi_usa = vehi_usa.rename(columns={'Num_Acc_x': 'Num_Acc'})
+
+    velo_df = pd.merge(vehi_usa, lieux_df_clean, on='Num_Acc', how='left')
+    all_datasets = pd.merge(velo_df, carac_df_clean, on='Num_Acc', how='left')
+    all_datasets = remove_no_location(all_datasets)
+
+    return all_datasets
