@@ -20,7 +20,9 @@ def predict(adr, date):
     lat, long = get_lat_lon(adr)
 
     # locals() gets us all of our arguments back as a dictionary
-    X_pred = pd.DataFrame({"lat":lat, "long":long, "date":date }, index=[0])
+    X_pred = pd.DataFrame({"lat":lat,
+                           "long":long,
+                           "date":date }, index=[0])
 
     # processing input feature before prediction
     X_processed = preprocess_features(X_pred)

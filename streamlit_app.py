@@ -23,7 +23,6 @@ if st.button("Predict Accident Probability"):
     response = requests.get(url, params=params)
 
     if response.status_code == 200:
-
         # Display the prediction result
         prediction = response.json()
         accident_probability = prediction['accident_probability']
