@@ -16,7 +16,5 @@ COPY requirements_prod.txt /requirements_prod.txt
 RUN pip install --upgrade pip
 RUN pip install -r requirements_prod.txt
 
-EXPOSE 8501
-
 # Run fast.py when the container launches
 CMD uvicorn fast:app --host 0.0.0.0

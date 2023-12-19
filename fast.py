@@ -13,7 +13,7 @@ from bikes.services.geolocation import get_lat_lon
 # instantiating fastapi
 app = FastAPI()
 
-model = np.random.uniform(0, 100)
+#model = np.random.uniform(0, 100)
 
 
 # defin predict endpoint
@@ -32,7 +32,7 @@ def predict(adr, date):
     #X_processed = preprocess_features(X_pred)
 
     # predict
-    y_pred = round(model, 2)
+    y_pred = round(np.random.uniform(0, 100), 2)
 
     return dict(accident_probability=float(y_pred),
                 lat=lat,
