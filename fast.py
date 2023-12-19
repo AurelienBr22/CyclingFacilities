@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import pandas as pd
 import numpy as np
+from bikes.ml_logic.model import load_model
 
 from bikes.services.geolocation import get_lat_lon
 #from bikes.ml_logic.preprocess import preprocess_features
@@ -13,7 +14,7 @@ from bikes.services.geolocation import get_lat_lon
 # instantiating fastapi
 app = FastAPI()
 
-#model = np.random.uniform(0, 100)
+model = load_model()#np.random.uniform(0, 100)
 
 
 # defin predict endpoint
