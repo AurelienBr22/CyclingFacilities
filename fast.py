@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import pandas as pd
 import numpy as np
-from bikes.ml_logic.model import load_model
+from bikes.ml_logic.model import load_model, predict_n_accidents
 
 from bikes.services.geolocation import get_lat_lon
 #from bikes.ml_logic.preprocess import preprocess_features
@@ -15,7 +15,6 @@ from bikes.services.geolocation import get_lat_lon
 app = FastAPI()
 
 model = load_model()#np.random.uniform(0, 100)
-
 
 # defin predict endpoint
 @app.get('/predict')
@@ -31,10 +30,8 @@ def predict(adr, date):
 
     # processing input feature before prediction
     #X_processed = preprocess_features(X_pred)
+    y_pred = predict_n_accidents(date, model)
 
-    # predict
-    y_pred = round(np.random.uniform(0, 100), 2)
-
-    return dict(accident_probability=float(y_pred),
+    return dict(accident_probability=y_pred,
                 lat=lat,
                 long=long)
