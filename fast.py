@@ -1,16 +1,20 @@
 from fastapi import FastAPI
 import pandas as pd
+import numpy as np
+
 from bikes.services.geolocation import get_lat_lon
-from bikes.ml_logic.preprocess import preprocess_features
-# library loading model
-import pickles
+#from bikes.ml_logic.preprocess import preprocess_features
+
+# # library loading model
+# import joblib
+
+# from google.cloud import storage
 
 # instantiating fastapi
 app = FastAPI()
 
-# pre-loading model when uvicorn server starts
-with open('model_filename.pkl', 'rb') as file:
-    model = pickles.load(file)
+model = np.random.uniform(0, 100)
+
 
 # defin predict endpoint
 @app.get('/predict')
@@ -25,10 +29,10 @@ def predict(adr, date):
                            "date":date }, index=[0])
 
     # processing input feature before prediction
-    X_processed = preprocess_features(X_pred)
+    #X_processed = preprocess_features(X_pred)
 
     # predict
-    y_pred = model.predict(X_processed)
+    y_pred = round(model, 2)
 
     return dict(accident_probability=float(y_pred),
                 lat=lat,

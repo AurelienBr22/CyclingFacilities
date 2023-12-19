@@ -8,15 +8,16 @@ st.title("Bike Accident Probability Prediction")
 # Input fields for the user
 address = st.text_input("Enter the address")
 date = st.date_input("Select the date")
+#hour = st.time_input("Select the hour")
 
 if st.button("Predict Accident Probability"):
     # API endpoint
-    url = "http://localhost:8000/predict"
+    url = "http://localhost:8501/predict"
 
     # Parameters to send to the FastAPI backend
     params = {
         "adr": address,
-        "date": date#.isoformat()  # Convert date to ISO format string
+        "date": date
     }
 
     # Sending a request to the FastAPI server
