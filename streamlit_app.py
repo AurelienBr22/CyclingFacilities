@@ -12,7 +12,7 @@ date = st.date_input("Select the date")
 
 if st.button("Predict Accident Probability"):
     # API endpoint
-    url = "http://localhost:8501/predict"
+    url = "http://localhost:8000/predict"
 
     # Parameters to send to the FastAPI backend
     params = {
