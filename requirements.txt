@@ -1,1 +1,6 @@
-pandas
+numpy==1.23.5
+pandas==1.5.3
+requests
+folium==0.15.1
+prophet==1.1.5
+streamlit_folium==0.17.4
