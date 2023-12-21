@@ -31,12 +31,15 @@ def page_model():
 
     heatmap = create_heatmap(locations)
     map_section = st.empty()
+    lat1=48.8566
+    long1=2.3522
+    map = folium.Map(location=[lat1, long1], zoom_start=16)
 
-    # Initially display the heatmap
+    #Initially display the heatmap
     with map_section.container():
         col4, col5, col6 = st.columns([1,6,1])
         with col5:
-            folium_static(heatmap, width=1200, height=600)
+            folium_static(map, width=1200, height=600)
 
     if st.button("Predict Accident Probability"):
         # API endpoint
@@ -73,15 +76,15 @@ def page_model():
 
 def page_secondaire():
     st.write("Page secondaire")
-    st.title("Chams peux-tu travailler stp ?")
+    st.title("Graphiques")
 
 # Création de la barre latérale
 choix_page = st.sidebar.selectbox("Choisissez une page :", ["Accueil","Model", "Page Secondaire"])
 
 # Logique de redirection
-if choix_page == "Accueil":
-    page_accueil()
 if choix_page == "Model":
     page_model()
+if choix_page == "Accueil":
+    page_accueil()
 elif choix_page == "Page Secondaire":
     page_secondaire()
