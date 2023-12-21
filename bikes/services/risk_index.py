@@ -25,13 +25,23 @@ def dist(point1: tuple, point2: tuple) -> float:
 def risk_index(point: tuple, coords: list, n: int) -> float:
     """
     Compute the distance between one point and a list of other points.
-    Take the distance of the n closest point and return the mean (in m).
+    Take the distance of the n closest point and return the mean (in km).
 
     - point: tuple. First element is the latitude, second is the longitude.
 
     - coords: list. List of coordinates. Each coordinate must be a tuple, first element is the latitude
     and second element is the longitude.
 
-    - n: int. Number of closest points which will be used to compute the mean.
+    - n: number of closest points which will be used to compute the mean.
     """
-    return mean(sorted([dist((point[0], point[1]), (coord[0], coord[1])) for coord in coords])[:n])
+
+    all_distances = [dist((point[0], point[1]), (coord[0], coord[1])) for coord in coords]
+    all_distances_sorted = sorted(all_distances)
+    all_distances_n = all_distances_sorted[:n]
+    res = mean(all_distances_n)
+
+    if res == 0:
+        n = all_distances_sorted.count(0)
+        return mean(all_distances_sorted[:n + 1])
+
+    return res
