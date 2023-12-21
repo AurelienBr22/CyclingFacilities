@@ -8,87 +8,67 @@ from bikes.visualization.visual import create_heatmap
 
 st.set_page_config(layout="wide")
 
-def page_accueil():
-    st.write("Page d'accueil")
+st.write("Model")
+# # Streamlit page configuration
+st.title("Bike Accident Probability Prediction")
 
-def page_model():
-    st.write("Model")
-    # # Streamlit page configuration
-    st.title("Bike Accident Probability Prediction")
+# Input fields for the user
+col1, col2, col3= st.columns([1, 1, 1])  # Ajustez ces valeurs pour modifier la répartition de l'espace
 
-    # Input fields for the user
-    col1, col2, col3= st.columns([1, 1, 1])  # Ajustez ces valeurs pour modifier la répartition de l'espace
+with col1:
+    address = st.text_input("Enter the address")
+with col3:
+    hr = st.time_input("Select the hour")
+with col2:
+    date = st.date_input("Select the date")
 
-    with col1:
-        address = st.text_input("Enter the address")
-    with col3:
-        hr = st.time_input("Select the hour")
-    with col2:
-        date = st.date_input("Select the date")
+# get data
+locations = pd.read_csv('./clean_data/crado_velo_format.csv')[['lat', 'long']]
 
-    # get data
-    locations = pd.read_csv('./clean_data/crado_velo_format.csv')[['lat', 'long']]
+heatmap = create_heatmap(locations)
+map_section = st.empty()
+lat1=48.8566
+long1=2.3522
+map = folium.Map(location=[lat1, long1], zoom_start=16)
 
-    heatmap = create_heatmap(locations)
-    map_section = st.empty()
-    lat1=48.8566
-    long1=2.3522
-    map = folium.Map(location=[lat1, long1], zoom_start=16)
+#Initially display the heatmap
+with map_section.container():
+    col4, col5, col6 = st.columns([1,6,1])
+    with col5:
+        folium_static(map, width=1200, height=600)
 
-    #Initially display the heatmap
-    with map_section.container():
-        col4, col5, col6 = st.columns([1,6,1])
-        with col5:
-            folium_static(map, width=1200, height=600)
+if st.button("Predict Accident Probability"):
+    # API endpoint
+    url = "http://localhost:8000/predict"
 
-    if st.button("Predict Accident Probability"):
-        # API endpoint
-        url = "http://localhost:8000/predict"
+    # Parameters to send to the FastAPI backend
+    params = {
+        "adr": address,
+        "date": date
+    }
 
-        # Parameters to send to the FastAPI backend
-        params = {
-            "adr": address,
-            "date": date
-        }
+    # Sending a request to the FastAPI servers
+    response = requests.get(url, params=params)
 
-        # Sending a request to the FastAPI servers
-        response = requests.get(url, params=params)
+    if response.status_code == 200:
+        # Display the prediction result
+        prediction = response.json()
+        accident_probability = prediction['accident_probability']
+        risk_idx = prediction['risk_idx']
+        score = prediction['score']
+        st.write(f"Predicted Accident Probability: {accident_probability}")
+        st.write(f"Local risk: {risk_idx}")
+        st.write(f"Score: {score}")
 
-        if response.status_code == 200:
-            # Display the prediction result
-            prediction = response.json()
-            accident_probability = prediction['accident_probability']
-            risk_idx = prediction['risk_idx']
-            score = prediction['score']
-            st.write(f"Predicted Accident Probability: {accident_probability}")
-            st.write(f"Local risk: {risk_idx}")
-            st.write(f"Score: {score}")
+        # Update the Folium heatmap with new data
+        lat, long = prediction['lat'], prediction['long']
+        heatmap = create_heatmap(locations, lat, long)
 
-            # Update the Folium heatmap with new data
-            lat, long = prediction['lat'], prediction['long']
-            heatmap = create_heatmap(locations, lat, long)
-
-            # Clear the initial map and display the updated map
-            map_section.empty()
-            with map_section.container():
-                col4, col5, col6 = st.columns([1,6,1])
-                with col5:
-                    folium_static(heatmap, width=1200, height=600)
-        else:
-            st.error("Error in API Call")
-
-
-def page_secondaire():
-    st.write("Page secondaire")
-    st.title("Graphiques")
-
-# Création de la barre latérale
-choix_page = st.sidebar.selectbox("Choisissez une page :", ["Accueil","Model", "Page Secondaire"])
-
-# Logique de redirection
-if choix_page == "Model":
-    page_model()
-if choix_page == "Accueil":
-    page_accueil()
-elif choix_page == "Page Secondaire":
-    page_secondaire()
+        # Clear the initial map and display the updated map
+        map_section.empty()
+        with map_section.container():
+            col4, col5, col6 = st.columns([1,6,1])
+            with col5:
+                folium_static(heatmap, width=1200, height=600)
+    else:
+        st.error("Error in API Call")
