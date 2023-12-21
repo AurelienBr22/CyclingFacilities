@@ -99,5 +99,3 @@ if st.button("Predict Accident Probability"):
             col4, col5, col6 = st.columns([1,6,1])
             with col5:
                 folium_static(heatmap, width=1200, height=600)
-else:
-    st.error("Error")
