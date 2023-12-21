@@ -55,7 +55,11 @@ def page_model():
             # Display the prediction result
             prediction = response.json()
             accident_probability = prediction['accident_probability']
+            risk_idx = prediction['risk_idx']
+            score = prediction['score']
             st.write(f"Predicted Accident Probability: {accident_probability}")
+            st.write(f"Local risk: {risk_idx}")
+            st.write(f"Score: {score}")
 
             # Update the Folium heatmap with new data
             lat, long = prediction['lat'], prediction['long']

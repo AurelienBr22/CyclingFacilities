@@ -11,15 +11,15 @@ def dist(point1: tuple, point2: tuple) -> float:
 
     - point2: tuple. First element is the latitude, second is longitude.
     """
-    # convert decimal degrees to radians 
+    # convert decimal degrees to radians
     lat1, lon1, lat2, lon2 = map(radians, [point1[0], point1[1], point2[0], point2[1]])
-    # haversine formula 
+    # haversine formula
     dlon = lon2 - lon1
-    dlat = lat2 - lat1 
+    dlat = lat2 - lat1
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a)) 
+    c = 2 * asin(sqrt(a))
     # Radius of earth in kilometers is 6371
-    km = 6371* c
+    km = 6_371_000 * c
     return km
 
 def risk_index(point: tuple, coords: list, n: int) -> float:
