@@ -72,11 +72,11 @@ heatmap = create_heatmap(locations)
 map_section = st.empty()
 lat1=48.8566
 long1=2.3522
-map = folium.Map(location=[lat1, long1], zoom_start=16, width='80%', height='100%')
+map = folium.Map(location=[lat1, long1], zoom_start=16)
 
 #Initially display the heatmap
-with map_section.container():
-    col4, col5, col6 = st.columns([1,6,1])
+with map_section.container(use_container_width=True):
+    col4, col5, col6 = st.columns([1,8,1])
     with col5:
         folium_static(map)
 
@@ -95,7 +95,7 @@ if st.button("Predict Accident Probability"):
 
         # Clear the initial map and display the updated map
         map_section.empty()
-        with map_section.container():
-            col4, col5, col6 = st.columns([1,6,1])
+        with map_section.container(use_container_width=True):
+            col4, col5, col6 = st.columns([1,8,1])
             with col5:
                 folium_static(heatmap)
