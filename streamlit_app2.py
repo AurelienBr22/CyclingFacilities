@@ -56,7 +56,7 @@ if st.button("Predict Accident Probability"):
         accident_probability = prediction['accident_probability']
         risk_idx = prediction['risk_idx']
         score = prediction['score']
-        st.write(f"Predicted Accident Probability: {accident_probability}")
+        st.write(f"Predicted number of accidents this day: {accident_probability}")
         st.write(f"Local risk: {risk_idx}")
         st.write(f"Score: {score}")
 
