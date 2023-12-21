@@ -27,7 +27,7 @@ def predict(adr, date):
     # converting adr to lat/long
     lat, long = get_lat_lon(adr)
     risk_idx = risk_index((lat, long), coords, 5)
-    breakpoint()
+    #breakpoint()
     # locals() gets us all of our arguments back as a dictionary
     X_pred = pd.DataFrame({"lat":lat,
                            "long":long,
@@ -42,11 +42,11 @@ def predict(adr, date):
     #print(risk_idx)
 
     #breakpoint()
-    score = y_pred * (1/risk_idx)
+    score = y_pred * (1/risk_idx) * 1000
 
     return dict(accident_probability=y_pred,
                 risk_idx=round(risk_idx, 2),
                 risk_idx_inv=round((1/risk_idx), 2),
-                score=score,
+                score=round(score, 2),
                 lat=lat,
                 long=long)
