@@ -15,10 +15,16 @@ date = st.date_input("Select the date")
 
 # get data
 locations = pd.read_csv('./raw_data/crado_velo_format.csv')[['lat', 'long']]
-# heatmap = create_heatmap(locations)
+heatmap = create_heatmap(locations)
+map_section = st.empty()
 
-# # Display the Folium map in Streamlit
-# folium_static(heatmap)
+# Initially display the heatmap
+with map_section.container():
+    folium_static(heatmap)
+
+
+# Display the Folium map in Streamlit
+#folium_static(heatmap)
 
 if st.button("Predict Accident Probability"):
     # API endpoint
@@ -41,9 +47,11 @@ if st.button("Predict Accident Probability"):
 
         # Update the Folium heatmap with new data
         lat, long = prediction['lat'], prediction['long']
-        heatmap = create_heatmap(lat, long)
+        updated_heatmap = create_heatmap(locations, lat, long)
 
-        # Display the Folium map in Streamlit
-        folium_static(heatmap)
+        # Clear the initial map and display the updated map
+        map_section.empty()
+        with map_section.container():
+            folium_static(updated_heatmap)
     else:
         st.error("Error in API Call")
