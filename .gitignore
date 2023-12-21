@@ -5,9 +5,7 @@
 Thumbs.db
 
 # Data
-
 raw_data/
-clean_data/
 notebooks/carac.csv
 notebooks/lieux.csv
 notebooks/usagers.csv
