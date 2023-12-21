@@ -17,13 +17,19 @@ def create_heatmap(locations, lat=48.8566, long=2.3522):
     )
 
     heatmap_layer.add_to(paris_map_heatmap)
-    folium.plugins.Geocoder().add_to(paris_map_heatmap)
-    MeasureControl(primary_length_unit='kilometers').add_to(paris_map_heatmap)
 
     # Add a marker for the user's location if available
     if lat and long:
         folium.Marker(
             location=[lat, long],
+            icon=folium.Icon(color='red', icon='bicycle', prefix='fa', size='small'),
+            popup='Point d\'intérêt'
+        ).add_to(paris_map_heatmap)
+        folium.Circle(
+            location=[lat, long],
+            radius=100,
+            color='red',
+            fill=False,
             popup='Point d\'intérêt'
         ).add_to(paris_map_heatmap)
 
